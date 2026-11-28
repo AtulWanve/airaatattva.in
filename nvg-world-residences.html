@@ -2,9 +2,9 @@
 /* ===== EDIT ME: lead capture + contact settings =====
    endpoint : URL that receives the form (Formspree / Web3Forms / Google Apps Script / your CRM webhook). Sent as a POST with form fields.
    phone    : e.g. "919876543210" (country code + number, digits only). Shows Call buttons when filled.
-   whatsapp : e.g. "919876543210". Shows a WhatsApp button when filled (also used as a fallback if no endpoint).
+   whatsapp : e.g. "919876543210". Shows a WhatsApp button when filled.
    Analytics: paste your GA4 / Meta Pixel / Google Tag Manager snippet right below this script. Lead events fire automatically. */
-window.NVG={endpoint:"",phone:"917899784933",whatsapp:"917899784933",project:"NVG World Residences"};
+window.NVG={endpoint:"https://script.google.com/macros/s/AKfycbxYQdBJicpR13K0BcMaBszv8DjTK4SGKWuUd3cWidEd6dfzaNyublxpwEtPLD8Gbsgb/exec",phone:"917899784933",whatsapp:"917899784933",project:"NVG World Residences",config:""};
 </script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap"><style>
 :root{color-scheme:dark;--n:#0a0f18;--iv:#fbf0e3;--cu:#d4813f;--cd:#a85f26;--go:#ecc690;--tx:#efe7dc;--mu:#a1a6b0;--ln:rgba(236,198,144,.22);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-behavior:smooth;scroll-padding-top:80px}*{box-sizing:border-box;margin:0}
@@ -140,6 +140,8 @@ $('.rv').forEach(function(el){var i=Array.prototype.indexOf.call(el.parentNode.c
 </script><script>(function(){
 var C=window.NVG||{},P=location.search,q=new URLSearchParams(P),keys=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'];
 function norm(v){var d=String(v).replace(/\D/g,'');if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);else if(d.length===11&&d[0]==='0')d=d.slice(1);return /^[6-9]\d{9}$/.test(d)?d:null}
+function baseParams(route){var ps=new URLSearchParams();ps.append('project',q.get('project')||C.project||'');ps.append('config',q.get('config')||C.config||'');ps.append('route',route);keys.forEach(function(k){if(q.get(k))ps.append(k,q.get(k))});return ps}
+function postEndpoint(ps,keepalive){var opts={method:'POST',body:ps};if(keepalive)opts.keepalive=true;if(C.noCors||/^https:\/\/script\.google(?:usercontent)?\.com\//i.test(C.endpoint))opts.mode='no-cors';return fetch(C.endpoint,opts)}
 function track(src){try{window.dataLayer=window.dataLayer||[];dataLayer.push({event:'lead_submit',lead_source:src});window.fbq&&fbq('track','Lead');window.gtag&&gtag('event','generate_lead',{lead_source:src})}catch(e){}}
 function done(f){var w=f.closest('.fm');w.querySelector('.fw').style.display='none';var o=w.querySelector('.ok');o.style.display='block';o.focus()}
 document.querySelectorAll('form.lead').forEach(function(f){
@@ -151,17 +153,14 @@ document.querySelectorAll('form.lead').forEach(function(f){
   if(!ph)return err('Please enter a valid 10-digit Indian mobile number.');
   if(!f.elements.consent.checked)return err('Please tick the consent box so we can contact you.');
   if(f.elements.website.value){return done(f)}
-  var fd=new FormData();fd.append('name',name);fd.append('phone','+91'+ph);fd.append('project',C.project||'');fd.append('source',f.dataset.src);fd.append('page',location.href.split('#')[0]);
-  keys.forEach(function(k){if(q.get(k))fd.append(k,q.get(k))});
+  var params=baseParams('Website Form');params.set('name',name);params.set('phone','+91'+ph);if(f.elements.config&&f.elements.config.value)params.set('config',f.elements.config.value);
   var ok=function(){track(f.dataset.src);done(f)};
   if(C.endpoint){btn.disabled=true;var t=btn.textContent;btn.textContent='Sending…';
-   fetch(C.endpoint,{method:'POST',body:fd,headers:{Accept:'application/json'}}).then(function(r){if(!r.ok)throw 0;ok()}).catch(function(){btn.disabled=false;btn.textContent=t;err('Something went wrong. Please try again or call us.')})}
-  else{console.warn('NVG: no form endpoint set (window.NVG.endpoint). This lead was NOT stored.');
-   if(C.whatsapp){window.open('https://wa.me/'+C.whatsapp+'?text='+encodeURIComponent('Hi, I am '+name+' ('+ph+'). I would like to register my interest in '+(C.project||'World Residences')+'.'),'_blank','noopener')}
-   ok()}
+   postEndpoint(params,false).then(function(r){if(r.type!=='opaque'&&!r.ok)throw 0;ok()}).catch(function(){btn.disabled=false;btn.textContent=t;err('Something went wrong. Please try again or call us.')})}
+  else{err('Form endpoint is not configured. Please call or WhatsApp us directly.')}
  })});
 if(C.phone||C.whatsapp){var cf=document.getElementById('cf');cf.hidden=false;
  var c=document.getElementById('cfc'),w=document.getElementById('cfw');
  if(C.phone){c.href='tel:+'+C.phone;var p=document.getElementById('ph');if(p)p.innerHTML='<a href="tel:+'+C.phone+'" style="color:inherit">+'+C.phone.replace(/^(\d{2})(\d{5})(\d{5})$/,'$1 $2 $3')+'</a>'}else c.style.display='none';
- if(C.whatsapp)w.href='https://wa.me/'+C.whatsapp+'?text='+encodeURIComponent('Hi, I would like to know more about '+(C.project||'World Residences')+'.');else w.style.display='none'}
+ if(C.whatsapp){w.href='https://wa.me/'+C.whatsapp+'?text='+encodeURIComponent('Hi, I would like to know more about '+(C.project||'World Residences')+'.')}else w.style.display='none'}
 })();</script></body></html>
